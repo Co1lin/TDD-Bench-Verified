@@ -1071,6 +1071,7 @@ def main(
         open_file_limit: int,
         run_id: str,
         timeout: int,
+        skip_eval: bool,
     ):
     """
     Run evaluation harness for the given dataset and predictions.
@@ -1093,7 +1094,8 @@ def main(
                 predictions = [json.loads(line) for line in f]
         else:
             raise ValueError("Predictions path must be \"gold\", .json, or .jsonl")
-
+        if isinstance(predictions, dict):
+            predictions = list(predictions.values())
         for pred in predictions:
             pred["model_name_or_path"]=predictions_path
 
@@ -1146,6 +1148,8 @@ def main(
     print(f"Running {len(dataset)} unevaluated instances...")
     if not dataset:
         print("No instances to run.")
+    elif skip_eval:
+        print("Skipping evaluation.")
     else:
         # build environment images + run instances
         build_env_images(client, dataset, force_rebuild, max_workers)
@@ -1184,6 +1188,7 @@ if __name__ == "__main__":
         "--clean", type=str2bool, default=False, help="Clean images above cache level"
     )
     parser.add_argument("--run_id", type=str, required=True, help="Run ID - identifies the run")
+    parser.add_argument("--skip_eval", type=str2bool, default=False, help="Skip evaluation")
     args = parser.parse_args()
 
     main(**vars(args))
